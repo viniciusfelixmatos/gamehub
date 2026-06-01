@@ -1,1 +1,29 @@
 @import "tailwindcss";
+
+/* Importação da Fonte Roboto */
+@import url("https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap");
+
+@theme {
+  /* FONTE */
+  --font-primary: "Roboto", sans-serif;
+
+  /* CORES DA MARCA */
+  --color-brand-primary: var(--color-violet-500);
+  --color-brand-secondary: var(--color-fuchsia-500);
+
+  /* CORES DE FUNDO */
+  --color-bg-main: var(--color-zinc-950);
+  --color-bg-surface: var(--color-zinc-900);
+  --color-bg-element: var(--color-zinc-800);
+
+  /* BORDAS */
+  --color-border-subtle: var(--color-zinc-800);
+  --color-border-focus: var(--color-zinc-700);
+
+  /* GRADIENTE */
+  --background-image-brand-gradient: linear-gradient(
+    to right,
+    var(--color-violet-500),
+    var(--color-fuchsia-500)
+  );
+}
