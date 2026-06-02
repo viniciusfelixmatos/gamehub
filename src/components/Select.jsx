@@ -8,7 +8,7 @@ export function Select({ options, placeholder, defaultValue, onValueChange }) {
       onValueChange={onValueChange}
     >
       {/* Botão de Disparo (Trigger) */}
-      <SelectPrimitive.Trigger className="inline-flex items-center justify-between gap-3 bg-bg-element border border-border-focus text-zinc-200 text-sm rounded-lg px-4 py-2 min-w-[160px] focus:outline-none focus:border-brand-primary cursor-pointer font-primary transition-colors data-[placeholder]:text-zinc-500">
+      <SelectPrimitive.Trigger className="inline-flex items-center justify-between gap-3 bg-bg-element border border-border-focus text-zinc-200 text-sm rounded-lg px-4 py-2 min-w-[200px] focus:outline-none focus:border-brand-primary cursor-pointer font-primary transition-colors data-[placeholder]:text-zinc-500">
         <SelectPrimitive.Value placeholder={placeholder} />
         <SelectPrimitive.Icon className="text-zinc-400">
           <ChevronDown className="w-4 h-4" />
@@ -17,7 +17,7 @@ export function Select({ options, placeholder, defaultValue, onValueChange }) {
 
       {/* Conteúdo do Menu (Portal garante que o menu renderize por cima de tudo) */}
       <SelectPrimitive.Portal>
-        <SelectPrimitive.Content className="overflow-hidden bg-bg-surface border border-border-subtle rounded-lg shadow-xl animate-in fade-in-50 duration-100 z-[100] min-w-[160px]">
+        <SelectPrimitive.Content className="overflow-hidden bg-bg-surface border border-border-subtle rounded-lg shadow-xl animate-in fade-in-50 duration-100 z-[2] min-w-[200px]">
           <SelectPrimitive.ScrollUpButton className="flex items-center justify-center h-6 bg-bg-surface text-zinc-400 cursor-default">
             <ChevronUp className="w-4 h-4" />
           </SelectPrimitive.ScrollUpButton>

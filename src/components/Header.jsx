@@ -16,9 +16,6 @@ export function Header() {
             className="w-full bg-bg-element border border-border-focus rounded-lg px-4 py-2 text-sm text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-brand-primary transition-colors font-primary"
           />
         </div>
-
-        {/* AVATAR/PLACEHOLDER */}
-        <div className="w-8 h-8 rounded-full bg-bg-element animate-pulse" />
       </div>
     </header>
   );
