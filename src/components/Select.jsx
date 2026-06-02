@@ -17,7 +17,7 @@ export function Select({ options, placeholder, defaultValue, onValueChange }) {
 
       {/* Conteúdo do Menu (Portal garante que o menu renderize por cima de tudo) */}
       <SelectPrimitive.Portal>
-        <SelectPrimitive.Content className="overflow-hidden bg-bg-surface border border-border-subtle rounded-lg shadow-xl animate-in fade-in-50 duration-100 z-[2] min-w-[200px]">
+        <SelectPrimitive.Content className="overflow-hidden bg-bg-surface border border-border-subtle rounded-lg shadow-xl animate-in fade-in-50 duration-100 z-[3] min-w-[200px]">
           <SelectPrimitive.ScrollUpButton className="flex items-center justify-center h-6 bg-bg-surface text-zinc-400 cursor-default">
             <ChevronUp className="w-4 h-4" />
           </SelectPrimitive.ScrollUpButton>

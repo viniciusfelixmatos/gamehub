@@ -1,6 +1,6 @@
 export function Header() {
   return (
-    <header className="bg-bg-surface border-b border-border-subtle sticky top-0 z-50 px-4 py-4 backdrop-blur-md bg-opacity-80">
+    <header className="bg-bg-surface border-b border-border-subtle sticky top-0 z-2 px-4 py-4 backdrop-blur-md bg-opacity-80">
       {/* ALINHAMENTO DO COMPONENTE */}
       <div className="w-full max-w-7xl mx-auto flex items-center justify-between">
         {/* TÍTULO COM O GRADIENTE DA MARCA*/}
