@@ -69,6 +69,17 @@ export const getYoutubeTrailer = async (gameName) => {
   return data.items?.[0]?.id?.videoId || null;
 };
 
+// Função para buscar conquistas de um jogo específico por ID
+export const getGameAchievements = async (id) => {
+  const response = await api.get(`/games/${id}/achievements`, {
+    params: {
+      key: import.meta.env.VITE_RAWG_API_KEY,
+      page_size: 40,
+    },
+  });
+  return response.data.results;
+};
+
 // Função para buscar jogos com base em uma consulta de pesquisa
 export const searchGames = async (query) => {
   const response = await api.get("/games", {

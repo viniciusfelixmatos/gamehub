@@ -3,13 +3,14 @@ import { useParams, Link } from "react-router-dom";
 import { useEffect } from "react";
 import { useGameDetails } from "../hooks/useGameDetails";
 
-// Importando os subcomponentes normais da pasta centralizada
+// Componentes de cada seção da página de detalhes
 import { GameHero } from "../components/GameDetails/GameHero";
 import { GameAbout } from "../components/GameDetails/GameAbout";
 import { GameTrailer } from "../components/GameDetails/GameTrailer";
 import { GameScreenshots } from "../components/GameDetails/GameScreenshots";
 import { GameRelated } from "../components/GameDetails/GameRelated";
 import { GameSidebar } from "../components/GameDetails/GameSidebar";
+import { GameAchievements } from "../components/GameDetails/GameAchievements";
 
 // Importando o esqueleto de carregamento
 import { GameDetailsSkeleton } from "../components/GameDetails/GameDetailsSkeleton";
@@ -60,8 +61,11 @@ export function GameDetails() {
         <div className="lg:col-span-2 space-y-6">
           <GameAbout description={game.description} />
 
-          {/* Antes: <GameTrailer id={id} /> */}
+          {/* Player de vídeo puxando automaticamente do YouTube */}
           <GameTrailer gameName={game.name} />
+
+          {/* Seção das conquistas */}
+          <GameAchievements id={id} />
 
           <GameScreenshots screenshots={screenshots} />
 
