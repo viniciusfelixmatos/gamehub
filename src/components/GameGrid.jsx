@@ -1,5 +1,6 @@
 // src/components/GameGrid.jsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { GameCard } from "./GameCard";
 import { Select } from "./Select";
 import { useGames } from "../hooks/useGame";
@@ -8,9 +9,18 @@ import { Pagination } from "./Pagination";
 
 export function GameGrid() {
   const [page, setPage] = useState(1);
+  const [searchParams] = useSearchParams();
 
-  // RFoi usado o hook personalizado para buscar os jogos, total de jogos, estado de carregamento e erros
-  const { games, totalGames, loading, error } = useGames(page);
+  // Captura o termo '?search=...' da URL. Se não existir, fica vazio.
+  const searchTerm = searchParams.get("search") || "";
+
+  // Se o usuário fizer uma nova busca, queremos resetar para a primeira página. Por isso, usamos um useEffect que depende do searchTerm.
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm]);
+
+  // Passamos o searchTerm como segundo argumento para o hook atualizado
+  const { games, totalGames, loading, error } = useGames(page, searchTerm);
 
   const genreOptions = [
     { value: "action", label: "Ação" },
@@ -26,10 +36,8 @@ export function GameGrid() {
     { value: "-rating", label: "Melhor Avaliados" },
   ];
 
-  // Lógica para quando o usuário muda de página
   const handlePageChange = (newPage) => {
     setPage(newPage);
-    // Faz a tela rolar suavemente para o topo quando a página mudar
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -41,7 +49,6 @@ export function GameGrid() {
     );
   }
 
-  // Criamos um array de 16 itens para renderizar os skeletons enquanto carrega (16 é o número de jogos por página)
   const skeletonCards = Array.from({ length: 16 }, (_, index) => index);
 
   return (
@@ -49,11 +56,16 @@ export function GameGrid() {
       {/* Cabeçalho e filtros */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
         <div>
+          {/* Títulos e subtitulos baseados na busca de forma dinâmica */}
           <h2 className="text-xl md:text-2xl font-primary font-bold text-zinc-100">
-            Jogos Populares
+            {searchTerm
+              ? `Resultados para: "${searchTerm}"`
+              : "Jogos Populares"}
           </h2>
           <p className="text-sm font-primary text-zinc-400">
-            Baseado nas escolhas da comunidade
+            {searchTerm
+              ? "Resultados encontrados na pesquisa"
+              : "Baseado nas escolhas da comunidade"}
           </p>
         </div>
 
@@ -74,15 +86,22 @@ export function GameGrid() {
         </div>
       </div>
 
+      {/* Feedback visual caso a busca não retorne nada */}
+      {!loading && games?.length === 0 && (
+        <div className="w-full text-center py-12 font-primary text-zinc-400">
+          Nenhum jogo encontrado para sua pesquisa.
+        </div>
+      )}
+
       {/* Grid de Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {loading
           ? skeletonCards.map((id) => <GameCardSkeleton key={id} />)
-          : games.map((game) => <GameCard key={game.id} game={game} />)}
+          : games?.map((game) => <GameCard key={game.id} game={game} />)}
       </div>
 
-      {/* Componente de paginação */}
-      {!loading && (
+      {/* Componente de paginação - Só renderiza se houver jogos na lista */}
+      {!loading && games?.length > 0 && (
         <Pagination
           currentPage={page}
           totalItems={totalGames}
