@@ -1,30 +1,38 @@
 // src/hooks/useGames.js
-
 import { useEffect, useState } from "react";
 import api from "../services/api";
 
-export function useGames() {
-  // Estado para armazenar os jogos, o status de carregamento e erros
+export function useGames(page = 1) {
+  // Recebe a página atual (padrão é 1)
   const [games, setGames] = useState([]);
+  const [totalGames, setTotalGames] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Função assíncrona para buscar os jogos
     const fetchGames = async () => {
       try {
-        setLoading(true); // Inicia o carregamento
-        const response = await api.get("/games"); // Faz a requisição para a API
-        setGames(response.data.results); // Armazena os jogos no estado
+        setLoading(true);
+        setError(null);
+
+        const response = await api.get("/games", {
+          params: {
+            page: page, // Envia a página para o RAWG
+            page_size: 16, // Fixado em 16 para casar com o número de skeletons e o layout do grid
+          },
+        });
+
+        setGames(response.data.results);
+        setTotalGames(response.data.count);
       } catch (err) {
-        setError("Erro ao carregar os jogos."); // Define a mensagem de erro
+        setError("Erro ao carregar os jogos.");
       } finally {
-        setLoading(false); // Finaliza o carregamento
+        setLoading(false);
       }
     };
 
-    fetchGames(); // Chama a função para buscar os jogos quando o componente montar
-  }, []); // O array vazio garante que o efeito rode apenas uma vez
+    fetchGames();
+  }, [page]);
 
-  return { games, loading, error }; // Retorna os jogos, o status de carregamento e erros
+  return { games, totalGames, loading, error };
 }
