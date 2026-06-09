@@ -202,16 +202,6 @@ Visualização completa das informações do jogo, incluindo descrição traduzi
 
 Modal dedicado à exibição das conquistas do jogo, apresentando nome, descrição e percentual de jogadores que desbloquearam cada conquista. São exibidas até 40 conquistas por jogo, limite definido pela API utilizada para obtenção dos dados.
 
-## 🎯 Roadmap
-
-- [ ] Sistema de favoritos
-- [ ] Perfil de usuário
-- [ ] Login social
-- [ ] Recomendações personalizadas
-- [ ] Histórico de navegação
-- [ ] Comparação entre jogos
-- [ ] Modo escuro
-
 ---
 
 ## 🤝 Contribuição
