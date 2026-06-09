@@ -1,10 +1,6 @@
 # 🎮 GameHub
 
 <p align="center">
-  Plataforma moderna para descoberta, pesquisa e exploração de jogos eletrônicos.
-</p>
-
-<p align="center">
   <img src="./public/gamehub-intro.png" alt="GameHub Preview" width="100%">
 </p>
 
