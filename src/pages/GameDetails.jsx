@@ -24,8 +24,12 @@ export function GameDetails() {
     window.scrollTo(0, 0); // Joga a tela para o topo
 
     if (game?.name) {
-      document.title = `${game.name} - GameDetails`; // Atualiza a aba do navegador
+      document.title = `${game.name} | GameHub`; // Atualiza a aba do navegador
     }
+
+    return () => {
+      document.title = "GameHub"; // Reseta o título ao sair da página
+    };
   }, [id, game?.name]);
 
   // Tela de Carregamento
