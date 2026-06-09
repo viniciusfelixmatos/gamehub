@@ -16,7 +16,9 @@ export function GameGrid() {
 
   // Se o usuário fizer uma nova busca, queremos resetar para a primeira página. Por isso, usamos um useEffect que depende do searchTerm.
   useEffect(() => {
-    setPage(1);
+    if (page !== 1) {
+      setPage(1);
+    }
   }, [searchTerm]);
 
   // Passamos o searchTerm como segundo argumento para o hook atualizado

@@ -27,3 +27,7 @@
     var(--color-fuchsia-500)
   );
 }
+
+* {
+  font-family: var(--font-primary);
+}

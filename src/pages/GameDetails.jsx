@@ -56,7 +56,7 @@ export function GameDetails() {
       <GameHero name={game.name} backgroundImage={game.background_image} />
 
       {/* Container Layout de duas colunas */}
-      <div className="max-w-6xl mx-auto px-4 mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="max-w-7xl mx-auto px-4 mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Coluna da Esquerda: Informações gerais */}
         <div className="lg:col-span-2 space-y-6">
           <GameAbout description={game.description} />
