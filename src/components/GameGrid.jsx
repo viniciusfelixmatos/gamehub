@@ -9,20 +9,27 @@ import { Pagination } from "./Pagination";
 
 export function GameGrid() {
   const [page, setPage] = useState(1);
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  // Captura o termo '?search=...' da URL. Se não existir, fica vazio.
+  // Recupera os valores de busca, gênero e ordenação contidos nos parâmetros da URL
   const searchTerm = searchParams.get("search") || "";
+  const currentGenre = searchParams.get("genres") || "";
+  const currentOrder = searchParams.get("ordering") || "-added";
 
-  // Se o usuário fizer uma nova busca, queremos resetar para a primeira página. Por isso, usamos um useEffect que depende do searchTerm.
+  // Redireciona a paginação para a primeira página caso os filtros ou o termo de busca sejam alterados
   useEffect(() => {
     if (page !== 1) {
       setPage(1);
     }
-  }, [searchTerm]);
+  }, [searchTerm, currentGenre, currentOrder]);
 
-  // Passamos o searchTerm como segundo argumento para o hook atualizado
-  const { games, totalGames, loading, error } = useGames(page, searchTerm);
+  // Consome a listagem de jogos injetando os estados de paginação e filtros de dados ativos
+  const { games, totalGames, loading, error } = useGames(
+    page,
+    searchTerm,
+    currentGenre,
+    currentOrder,
+  );
 
   const genreOptions = [
     { value: "action", label: "Ação" },
@@ -37,6 +44,28 @@ export function GameGrid() {
     { value: "-released", label: "Lançamento Recente" },
     { value: "-rating", label: "Melhor Avaliados" },
   ];
+
+  // Adiciona ou remove o parâmetro de gênero na URL da rota atual
+  const handleGenreChange = (value) => {
+    const newParams = new URLSearchParams(searchParams);
+    if (value) {
+      newParams.set("genres", value);
+    } else {
+      newParams.delete("genres");
+    }
+    setSearchParams(newParams);
+  };
+
+  // Atualiza ou redefine o parâmetro de ordenação na URL da rota atual
+  const handleOrderChange = (value) => {
+    const newParams = new URLSearchParams(searchParams);
+    if (value) {
+      newParams.set("ordering", value);
+    } else {
+      newParams.set("ordering", "-added");
+    }
+    setSearchParams(newParams);
+  };
 
   const handlePageChange = (newPage) => {
     setPage(newPage);
@@ -55,10 +84,8 @@ export function GameGrid() {
 
   return (
     <section className="w-full max-w-7xl mx-auto px-4 py-8 xl:px-0">
-      {/* Cabeçalho e filtros */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
         <div>
-          {/* Títulos e subtitulos baseados na busca de forma dinâmica */}
           <h2 className="text-xl md:text-2xl font-primary font-bold text-zinc-100">
             {searchTerm
               ? `Resultados para: "${searchTerm}"`
@@ -74,35 +101,34 @@ export function GameGrid() {
         <div className="flex flex-wrap items-center gap-3">
           <Select
             placeholder="Todos os Gêneros"
+            value={currentGenre}
             options={genreOptions}
-            onValueChange={(value) => console.log(value)}
+            onValueChange={handleGenreChange}
             disabled={loading}
           />
 
           <Select
             defaultValue="-added"
+            value={currentOrder}
             options={orderOptions}
-            onValueChange={(value) => console.log(value)}
+            onValueChange={handleOrderChange}
             disabled={loading}
           />
         </div>
       </div>
 
-      {/* Feedback visual caso a busca não retorne nada */}
       {!loading && games?.length === 0 && (
         <div className="w-full text-center py-12 font-primary text-zinc-400">
           Nenhum jogo encontrado para sua pesquisa.
         </div>
       )}
 
-      {/* Grid de Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {loading
           ? skeletonCards.map((id) => <GameCardSkeleton key={id} />)
           : games?.map((game) => <GameCard key={game.id} game={game} />)}
       </div>
 
-      {/* Componente de paginação - Só renderiza se houver jogos na lista */}
       {!loading && games?.length > 0 && (
         <Pagination
           currentPage={page}

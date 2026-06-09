@@ -1,29 +1,36 @@
+// src/services/gameService.js
 import api from "./api";
 
-// Função para buscar jogos populares com paginação
-export const getPopularGames = async (page = 1) => {
+// Executa a listagem padrão do catálogo aplicando paginação, filtro de gênero e ordenação
+export const getPopularGames = async (
+  page = 1,
+  genre = "",
+  ordering = "-added",
+) => {
   const response = await api.get("/games", {
     params: {
       page: page,
       page_size: 16,
+      genres: genre || undefined, // Envia apenas se houver gênero selecionado
+      ordering: ordering || undefined, // Envia a ordenação ativa ou remove se nulo
     },
   });
   return response.data;
 };
 
-// Função para buscar detalhes de um jogo específico por ID
+// Busca detalhes de um jogo específico baseado no identificador único
 export const getGameById = async (id) => {
   const response = await api.get(`/games/${id}`);
   return response.data;
 };
 
-// Função para buscar screenshots de um jogo específico por ID
+// Busca imagens de captura de tela de um jogo específico baseado no identificador único
 export const getGameScreenshots = async (id) => {
   const response = await api.get(`/games/${id}/screenshots`);
   return response.data.results;
 };
 
-// Função para buscar jogos relacionados por gênero, excluindo o jogo atual
+// Busca jogos recomendados baseando-se nos gêneros e omitindo o registro do jogo atual
 export const getRelatedGamesByGenre = async (genres, currentId) => {
   if (!genres || genres.length === 0) return [];
 
@@ -44,13 +51,13 @@ export const getRelatedGamesByGenre = async (genres, currentId) => {
     .slice(0, 4);
 };
 
-// Função para buscar trailers de um jogo específico por ID
+// Busca trailers curtos hospedados nativamente na base de dados do jogo solicitado
 export const getGameTrailers = async (id) => {
   const response = await api.get(`/games/${id}/movies`);
   return response.data.results;
 };
 
-// Função para buscar o trailer oficial no YouTube usando a API do Google
+// Executa uma requisição externa na API do Google para extrair o identificador de vídeo do trailer oficial
 export const getYoutubeTrailer = async (gameName) => {
   const YOUTUBE_KEY = import.meta.env.VITE_YOUTUBE_API_KEY;
   const searchQuery = encodeURIComponent(`${gameName} official trailer`);
@@ -67,7 +74,7 @@ export const getYoutubeTrailer = async (gameName) => {
   return data.items?.[0]?.id?.videoId || null;
 };
 
-// Função para buscar conquistas de um jogo específico por ID
+// Busca a listagem de conquistas e troféus associados ao jogo solicitado
 export const getGameAchievements = async (id) => {
   const response = await api.get(`/games/${id}/achievements`, {
     params: {
@@ -78,12 +85,20 @@ export const getGameAchievements = async (id) => {
   return response.data.results;
 };
 
-// Retornado apenas os dados relevantes para a busca, alinhado com o que o seu Grid espera
-export const searchGames = async (query) => {
+// Executa uma busca por termo textual aplicando paginação, filtro de gênero e ordenação nos resultados
+export const searchGames = async (
+  query,
+  page = 1,
+  genre = "",
+  ordering = "-added",
+) => {
   const response = await api.get("/games", {
     params: {
       search: query,
+      page: page,
       page_size: 16,
+      genres: genre || undefined, // Permite filtrar categorias dentro da busca por texto
+      ordering: ordering || undefined, // Permite ordenar os resultados encontrados por relevância/nota
     },
   });
   return response.data;

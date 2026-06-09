@@ -2,8 +2,15 @@
 import { useEffect, useState } from "react";
 import { getPopularGames, searchGames } from "../services/gameService";
 
-export function useGames(page = 1, searchTerm = "") {
-  // Estados para armazenar os jogos, total de jogos (para paginação), status de carregamento e erros
+/**
+ * Hook customizado para gerenciar a listagem, busca, paginação e filtragem de jogos.
+ */
+export function useGames(
+  page = 1,
+  searchTerm = "",
+  genre = "",
+  ordering = "-added",
+) {
   const [games, setGames] = useState([]);
   const [totalGames, setTotalGames] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -15,15 +22,17 @@ export function useGames(page = 1, searchTerm = "") {
         setLoading(true);
         setError(null);
 
-        // Controla o fluxo: decide se busca por texto ou se traz a listagem padrão
+        // Verifica se há um termo de busca ativo para definir o serviço de dados apropriado
         if (searchTerm.trim()) {
-          const data = await searchGames(searchTerm);
+          // Executa a busca por texto passando as opções de gênero e ordenação aplicadas
+          const data = await searchGames(searchTerm, page, genre, ordering);
           setGames(data.results);
-          setTotalGames(data.count); // Ajusta a paginação para o total de itens encontrados na busca
+          setTotalGames(data.count);
         } else {
-          const data = await getPopularGames(page);
+          // Executa a listagem padrão do catálogo aplicando paginação, gênero e ordenação
+          const data = await getPopularGames(page, genre, ordering);
           setGames(data.results);
-          setTotalGames(data.count); // Mantém a paginação oficial do catálogo completo
+          setTotalGames(data.count);
         }
       } catch (err) {
         console.error("Erro interno ao buscar dados no hook useGames:", err);
@@ -35,8 +44,8 @@ export function useGames(page = 1, searchTerm = "") {
 
     fetchGames();
 
-    // O efeito roda novamente sempre que o usuário muda de página OU digita algo novo
-  }, [page, searchTerm]);
+    // Dispara a requisição sempre que houver alteração em qualquer um dos parâmetros de paginação ou filtros
+  }, [page, searchTerm, genre, ordering]);
 
   return { games, totalGames, loading, error };
 }
