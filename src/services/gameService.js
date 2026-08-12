@@ -101,21 +101,53 @@ export const getPopularGames = async (
 
 // Função para buscar o AppID da Steam pelo nome do jogo via loja pública da Steam
 export const searchSteamAppIdByName = async (gameName) => {
+  if (!gameName) return null;
+  const cleanName = encodeURIComponent(gameName.trim());
+
+  // 1. Primeira tentativa: Usa o proxy /steam-store já configurado no vite.config.js e vercel.json
   try {
-    const cleanName = encodeURIComponent(gameName.trim());
-
-    // 1. Tenta via endpoint público do Steam Community (muito mais permissivo que o storesearch)
-    const targetUrl = `https://steamcommunity.com/actions/SearchApps/${cleanName}`;
-
-    // Usamos um fetch direto ou com fallback
-    const response = await fetch(targetUrl);
+    const response = await fetch(
+      `/steam-store/api/storesearch/?term=${cleanName}&l=portuguese&cc=BR`,
+    );
 
     if (response.ok) {
       const data = await response.json();
 
-      // Se retornar uma lista válida de jogos
+      if (data && data.items && data.items.length > 0) {
+        // Tenta achar correspondência exata do nome
+        const exactMatch = data.items.find(
+          (item) => item.name.toLowerCase() === gameName.toLowerCase(),
+        );
+
+        const selectedItem = exactMatch || data.items[0];
+
+        console.log(
+          `--> [Steam Fallback] AppID encontrado via Proxy StoreSearch ("${gameName}"):`,
+          selectedItem.id,
+          `(${selectedItem.name})`,
+        );
+
+        return String(selectedItem.id);
+      }
+    }
+  } catch (error) {
+    console.warn(
+      "[Steam Fallback] Tentativa 1 (Proxy StoreSearch) falhou:",
+      error,
+    );
+  }
+
+  // 2. Segunda tentativa: Usa CORS Anywhere Proxy Público para a busca da Comunidade Steam
+  try {
+    const targetUrl = `https://steamcommunity.com/actions/SearchApps/${cleanName}`;
+    const corsProxyUrl = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
+
+    const response = await fetch(corsProxyUrl);
+
+    if (response.ok) {
+      const data = await response.json();
+
       if (Array.isArray(data) && data.length > 0) {
-        // Tenta encontrar um nome exato
         const exactMatch = data.find(
           (item) => item.name.toLowerCase() === gameName.toLowerCase(),
         );
@@ -123,7 +155,7 @@ export const searchSteamAppIdByName = async (gameName) => {
         const selectedItem = exactMatch || data[0];
 
         console.log(
-          `--> [Steam Fallback] AppID encontrado via busca por nome ("${gameName}"):`,
+          `--> [Steam Fallback] AppID encontrado via CORS Proxy Community ("${gameName}"):`,
           selectedItem.appid,
           `(${selectedItem.name})`,
         );
@@ -131,36 +163,9 @@ export const searchSteamAppIdByName = async (gameName) => {
         return String(selectedItem.appid);
       }
     }
-  } catch (error) {
-    console.warn(
-      "[Steam Fallback] Tentativa 1 (SteamCommunity) falhou. Tentando alternativa...",
-      error,
-    );
-  }
-
-  // 2. Alternativa Fallback: Busca pública na API sem bloqueio
-  try {
-    const cleanName = encodeURIComponent(gameName.trim());
-    const response = await fetch(
-      `https://corsproxy.io/?${encodeURIComponent(
-        `https://store.steampowered.com/api/storesearch/?term=${cleanName}&l=portuguese&cc=BR`,
-      )}`,
-    );
-
-    if (response.ok) {
-      const data = await response.json();
-      if (data && data.items && data.items.length > 0) {
-        const selectedItem = data.items[0];
-        console.log(
-          `--> [Steam Fallback] AppID encontrado via fallback secundário:`,
-          selectedItem.id,
-        );
-        return String(selectedItem.id);
-      }
-    }
   } catch (fallbackError) {
     console.warn(
-      "[Steam Fallback] Todas as tentativas de busca de AppID falharam:",
+      "[Steam Fallback] Tentativa 2 (CORS Proxy Community) falhou:",
       fallbackError,
     );
   }
