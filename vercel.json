@@ -5,6 +5,10 @@
       "destination": "https://api.igdb.com/v4/:path*"
     },
     {
+      "source": "/steam-store/:path*",
+      "destination": "https://store.steampowered.com/:path*"
+    },
+    {
       "source": "/steam/:path*",
       "destination": "https://api.steampowered.com/:path*"
     },

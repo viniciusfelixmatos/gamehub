@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
     proxy: {
-      // Proxy IGDB existente
+      // Proxy IGDB
       "/igdb": {
         target: "https://api.igdb.com/v4",
         changeOrigin: true,
@@ -20,7 +20,7 @@ export default defineConfig({
       },
       // Proxy para a Steam Store API (Busca de Jogos e Preços)
       "/steam-store": {
-        target: "https://store.steampowered.com/api",
+        target: "https://store.steampowered.com",
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/steam-store/, ""),
       },

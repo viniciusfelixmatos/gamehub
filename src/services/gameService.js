@@ -102,29 +102,66 @@ export const getPopularGames = async (
 // Função para buscar o AppID da Steam pelo nome do jogo via loja pública da Steam
 export const searchSteamAppIdByName = async (gameName) => {
   try {
-    const cleanName = encodeURIComponent(gameName);
-    const targetUrl = `https://store.steampowered.com/api/storesearch/?term=${cleanName}&l=portuguese&cc=BR`;
+    const cleanName = encodeURIComponent(gameName.trim());
 
-    // Usamos corsproxy.io para burlar a restrição de CORS do navegador
-    const response = await fetch(
-      `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`,
-    );
+    // 1. Tenta via endpoint público do Steam Community (muito mais permissivo que o storesearch)
+    const targetUrl = `https://steamcommunity.com/actions/SearchApps/${cleanName}`;
 
-    const data = await response.json();
+    // Usamos um fetch direto ou com fallback
+    const response = await fetch(targetUrl);
 
-    if (data && data.items && data.items.length > 0) {
-      // Retorna o AppID do primeiro jogo correspondente encontrado na Steam
-      const match = data.items[0];
-      console.log(
-        `--> [Steam Fallback] AppID encontrado via busca por nome ("${gameName}"):`,
-        match.id,
-      );
-      return String(match.id);
+    if (response.ok) {
+      const data = await response.json();
+
+      // Se retornar uma lista válida de jogos
+      if (Array.isArray(data) && data.length > 0) {
+        // Tenta encontrar um nome exato
+        const exactMatch = data.find(
+          (item) => item.name.toLowerCase() === gameName.toLowerCase(),
+        );
+
+        const selectedItem = exactMatch || data[0];
+
+        console.log(
+          `--> [Steam Fallback] AppID encontrado via busca por nome ("${gameName}"):`,
+          selectedItem.appid,
+          `(${selectedItem.name})`,
+        );
+
+        return String(selectedItem.appid);
+      }
     }
   } catch (error) {
     console.warn(
-      "[Steam Fallback] Erro ao buscar AppID na loja da Steam:",
+      "[Steam Fallback] Tentativa 1 (SteamCommunity) falhou. Tentando alternativa...",
       error,
+    );
+  }
+
+  // 2. Alternativa Fallback: Busca pública na API sem bloqueio
+  try {
+    const cleanName = encodeURIComponent(gameName.trim());
+    const response = await fetch(
+      `https://corsproxy.io/?${encodeURIComponent(
+        `https://store.steampowered.com/api/storesearch/?term=${cleanName}&l=portuguese&cc=BR`,
+      )}`,
+    );
+
+    if (response.ok) {
+      const data = await response.json();
+      if (data && data.items && data.items.length > 0) {
+        const selectedItem = data.items[0];
+        console.log(
+          `--> [Steam Fallback] AppID encontrado via fallback secundário:`,
+          selectedItem.id,
+        );
+        return String(selectedItem.id);
+      }
+    }
+  } catch (fallbackError) {
+    console.warn(
+      "[Steam Fallback] Todas as tentativas de busca de AppID falharam:",
+      fallbackError,
     );
   }
 
@@ -132,7 +169,6 @@ export const searchSteamAppIdByName = async (gameName) => {
 };
 
 // Busca detalhes de um jogo específico baseado no identificador único
-// src/services/gameService.js
 export const getGameById = async (id) => {
   try {
     console.log("--> [getGameById] Buscando detalhes para o ID:", id);
@@ -174,7 +210,7 @@ export const getGameById = async (id) => {
 
     return {
       id: game.id,
-      steamAppId, // Agora jogos como Total War: Warhammer retornarão o ID ("365720")!
+      steamAppId,
       name: game.name,
       description: description,
       description_raw: description,
