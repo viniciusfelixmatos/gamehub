@@ -4,21 +4,37 @@ import { getYoutubeTrailer } from "../services/gameService";
 
 export function useYoutubeTrailer(gameName) {
   const [videoId, setVideoId] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (!gameName) return;
+    // Se o nome do jogo ainda não chegou, reseta os estados e não faz a busca
+    if (!gameName) {
+      setVideoId(null);
+      setLoading(false);
+      return;
+    }
 
     let isMounted = true;
     setLoading(true);
+    setError(null);
 
     getYoutubeTrailer(gameName)
       .then((id) => {
-        if (isMounted) setVideoId(id);
+        if (isMounted) {
+          setVideoId(id);
+        }
       })
-      .catch((err) => console.error(err))
+      .catch((err) => {
+        console.error("Erro ao buscar trailer do YouTube:", err);
+        if (isMounted) {
+          setError(err);
+        }
+      })
       .finally(() => {
-        if (isMounted) setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       });
 
     return () => {
@@ -26,5 +42,5 @@ export function useYoutubeTrailer(gameName) {
     };
   }, [gameName]);
 
-  return { videoId, loading };
+  return { videoId, loading, error };
 }

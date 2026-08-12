@@ -1,4 +1,5 @@
 // src/hooks/useGameDetails.js
+
 import { useEffect, useState } from "react";
 import { getGameById, getGameScreenshots } from "../services/gameService";
 import { translateText } from "../utils/translate";
@@ -15,15 +16,16 @@ export function useGameDetails(id) {
         setLoading(true);
         setError(null);
 
-        // Executa em paralelo as requisições de detalhes textuais e capturas de tela do jogo
         const [gameData, screenshotData] = await Promise.all([
           getGameById(id),
           getGameScreenshots(id).catch(() => []),
         ]);
 
-        // Traduz o bloco de descrição assincronamente caso o campo exista no retorno da API
-        if (gameData && gameData.description) {
-          gameData.description = await translateText(gameData.description);
+        if (gameData && gameData.description_raw) {
+          const translated = await translateText(gameData.description_raw);
+
+          gameData.description_raw = translated;
+          gameData.description = translated;
         }
 
         setGame(gameData);
@@ -33,6 +35,7 @@ export function useGameDetails(id) {
           "Erro interno ao buscar detalhes no hook useGameDetails:",
           err,
         );
+
         setError("Erro ao carregar os detalhes do jogo.");
       } finally {
         setLoading(false);
@@ -44,5 +47,10 @@ export function useGameDetails(id) {
     }
   }, [id]);
 
-  return { game, screenshots, loading, error };
+  return {
+    game,
+    screenshots,
+    loading,
+    error,
+  };
 }

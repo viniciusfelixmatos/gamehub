@@ -1,18 +1,30 @@
-// Hook personalizado para buscar conquistas de um jogo
+// src/hooks/useGameAchievements.js
+
 import { useState, useEffect } from "react";
 import { getGameAchievements } from "../services/gameService";
 
-export function useGameAchievements(id) {
+export function useGameAchievements(appId, steamId, apiKey) {
   const [achievements, setAchievements] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  // Se a apiKey não for passada por prop, pega automaticamente do .env
+  const finalApiKey = apiKey || import.meta.env.VITE_STEAM_API_KEY;
 
   useEffect(() => {
-    if (!id) return;
+    // Agora valida usando a chave final resolvida
+    if (!appId || !finalApiKey) {
+      setAchievements([]);
+      setLoading(false);
+      return;
+    }
 
     let isMounted = true;
-    setLoading(true);
 
-    getGameAchievements(id)
+    setLoading(true);
+    setError(null);
+
+    getGameAchievements(appId, steamId, finalApiKey)
       .then((data) => {
         if (isMounted) {
           setAchievements(data || []);
@@ -20,15 +32,26 @@ export function useGameAchievements(id) {
       })
       .catch((err) => {
         console.error("Erro ao buscar conquistas:", err);
+
+        if (isMounted) {
+          setError(err);
+          setAchievements([]);
+        }
       })
       .finally(() => {
-        if (isMounted) setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       });
 
     return () => {
       isMounted = false;
     };
-  }, [id]);
+  }, [appId, steamId, finalApiKey]);
 
-  return { achievements, loading };
+  return {
+    achievements,
+    loading,
+    error,
+  };
 }

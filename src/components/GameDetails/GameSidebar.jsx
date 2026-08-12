@@ -1,6 +1,8 @@
 // pages/GameDetails/GameSidebar.jsx
 
 export function GameSidebar({ game }) {
+  if (!game) return null;
+
   return (
     <aside className="bg-bg-surface border border-border-subtle rounded-xl p-6 space-y-6">
       {/* Avaliação */}
@@ -9,48 +11,54 @@ export function GameSidebar({ game }) {
           Avaliação
         </span>
         <div className="inline-flex items-center gap-1.5 bg-black/40 backdrop-blur-md text-amber-400 font-bold text-lg px-3 py-1 rounded border border-border-subtle">
-          <span>★</span> {game.rating}{" "}
+          <span>★</span> {game.rating || 4.0}{" "}
           <span className="text-zinc-500 text-xs font-normal">/ 5</span>
         </div>
       </div>
 
-      <hr className="border-border-subtle" />
-
-      {/* Plataformas */}
-      <div>
-        <span className="text-xs uppercase tracking-wider text-zinc-500 font-semibold block mb-2">
-          Plataformas
-        </span>
-        <div className="flex flex-wrap gap-2">
-          {game.parent_platforms?.map(({ platform }) => (
-            <span
-              key={platform.id}
-              className="text-xs uppercase font-semibold tracking-wider text-zinc-300 bg-bg-element border border-border-subtle px-3 py-1 rounded"
-            >
-              {platform.name}
+      {/* Plataformas (se houver) */}
+      {game.parent_platforms?.length > 0 && (
+        <>
+          <hr className="border-border-subtle" />
+          <div>
+            <span className="text-xs uppercase tracking-wider text-zinc-500 font-semibold block mb-2">
+              Plataformas
             </span>
-          ))}
-        </div>
-      </div>
-
-      <hr className="border-border-subtle" />
+            <div className="flex flex-wrap gap-2">
+              {game.parent_platforms.map(({ platform }, idx) => (
+                <span
+                  key={platform.id || platform.name || idx}
+                  className="text-xs uppercase font-semibold tracking-wider text-zinc-300 bg-bg-element border border-border-subtle px-3 py-1 rounded"
+                >
+                  {platform.name}
+                </span>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Gêneros */}
-      <div>
-        <span className="text-xs uppercase tracking-wider text-zinc-500 font-semibold block mb-2">
-          Gêneros
-        </span>
-        <div className="flex flex-wrap gap-2">
-          {game.genres?.map((genre) => (
-            <span
-              key={genre.id}
-              className="text-xs text-zinc-400 bg-bg-element/50 px-2.5 py-1 rounded border border-border-subtle"
-            >
-              {genre.name}
+      {game.genres?.length > 0 && (
+        <>
+          <hr className="border-border-subtle" />
+          <div>
+            <span className="text-xs uppercase tracking-wider text-zinc-500 font-semibold block mb-2">
+              Gêneros
             </span>
-          ))}
-        </div>
-      </div>
+            <div className="flex flex-wrap gap-2">
+              {game.genres.map((genre, idx) => (
+                <span
+                  key={genre.id || genre.name || idx}
+                  className="text-xs text-zinc-400 bg-bg-element/50 px-2.5 py-1 rounded border border-border-subtle"
+                >
+                  {genre.name}
+                </span>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Desenvolvedores */}
       {game.developers?.length > 0 && (
@@ -69,16 +77,14 @@ export function GameSidebar({ game }) {
 
       <hr className="border-border-subtle" />
 
-      {/* Metacritic e Lançamento */}
+      {/* Lançamento e Metacritic */}
       <div className="grid grid-cols-2 gap-4">
         <div>
           <span className="text-xs uppercase tracking-wider text-zinc-500 font-semibold block mb-1">
             Lançamento
           </span>
           <span className="text-sm font-medium text-zinc-300">
-            {game.released
-              ? new Date(game.released).toLocaleDateString("pt-BR")
-              : "N/A"}
+            {game.released || "N/A"}
           </span>
         </div>
 
@@ -103,9 +109,9 @@ export function GameSidebar({ game }) {
               Onde comprar
             </span>
             <div className="grid grid-cols-1 gap-2">
-              {game.stores.map(({ store }) => (
+              {game.stores.map(({ store }, idx) => (
                 <span
-                  key={store.id}
+                  key={store.id || store.name || idx}
                   className="text-xs text-zinc-400 bg-bg-element/30 border border-border-subtle px-3 py-2 rounded-lg flex items-center justify-between"
                 >
                   {store.name}
@@ -119,6 +125,7 @@ export function GameSidebar({ game }) {
         </>
       )}
 
+      {/* Website Oficial */}
       {game.website && (
         <>
           <hr className="border-border-subtle" />

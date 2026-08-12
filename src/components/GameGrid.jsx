@@ -33,7 +33,7 @@ export function GameGrid() {
 
   const genreOptions = [
     { value: "action", label: "Ação" },
-    { value: "role-playing-games-rpg", label: "RPG" },
+    { value: "rpg", label: "RPG" },
     { value: "shooter", label: "Tiro" },
     { value: "strategy", label: "Estratégia" },
   ];
