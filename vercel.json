@@ -1,0 +1,16 @@
+{
+  "rewrites": [
+    {
+      "source": "/igdb/:path*",
+      "destination": "https://api.igdb.com/v4/:path*"
+    },
+    {
+      "source": "/steam/:path*",
+      "destination": "https://api.steampowered.com/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
