@@ -8,6 +8,13 @@ export function GameAchievements({ gameName, appId, steamId, apiKey }) {
   // Pega a chave do .env como fallback caso não venha via props
   const finalApiKey = apiKey || import.meta.env.VITE_STEAM_API_KEY;
 
+  console.log("[GameAchievements] Props recebidas:", {
+    gameName,
+    appId,
+    steamId,
+    temApiKey: !!finalApiKey,
+  });
+
   const { achievements, loading } = useGameAchievements(
     appId,
     steamId,

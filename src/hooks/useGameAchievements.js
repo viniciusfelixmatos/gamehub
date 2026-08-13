@@ -8,12 +8,27 @@ export function useGameAchievements(appId, steamId, apiKey) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Se a apiKey não for passada por prop, pega automaticamente do .env
   const finalApiKey = apiKey || import.meta.env.VITE_STEAM_API_KEY;
 
+  console.log("[useGameAchievements] Valores recebidos:", {
+    appId,
+    steamId,
+    temApiKey: !!finalApiKey,
+  });
+
   useEffect(() => {
-    // Agora valida usando a chave final resolvida
+    console.log("[useGameAchievements] Executando useEffect:", {
+      appId,
+      steamId,
+      temApiKey: !!finalApiKey,
+    });
+
     if (!appId || !finalApiKey) {
+      console.log("[useGameAchievements] BLOQUEADO:", {
+        appId,
+        temApiKey: !!finalApiKey,
+      });
+
       setAchievements([]);
       setLoading(false);
       return;
@@ -23,6 +38,8 @@ export function useGameAchievements(appId, steamId, apiKey) {
 
     setLoading(true);
     setError(null);
+
+    console.log("[useGameAchievements] Chamando getGameAchievements...");
 
     getGameAchievements(appId, steamId, finalApiKey)
       .then((data) => {
