@@ -104,74 +104,69 @@ export const searchSteamAppIdByName = async (gameName) => {
   if (!gameName) return null;
   const cleanName = encodeURIComponent(gameName.trim());
 
-  // 1. Primeira tentativa: API do SteamGridDB (Autocomplete rápido e 100% público)
+  // 1. PRIMEIRA TENTATIVA: API da CheapShark (100% pública, com CORS nativo e sem bloqueio em Datacenters/Vercel)
   try {
-    const sgdbUrl = `https://www.steamgriddb.com/api/v2/search/autocomplete/${cleanName}`;
-    const response = await fetch(sgdbUrl);
+    const cheapSharkUrl = `https://www.cheapshark.com/api/1.0/games?title=${cleanName}&limit=5`;
+    const response = await fetch(cheapSharkUrl);
 
     if (response.ok) {
-      const contentType = response.headers.get("content-type");
-      if (contentType && contentType.includes("application/json")) {
-        const data = await response.json();
+      const data = await response.json();
 
-        if (
-          data &&
-          data.success &&
-          Array.isArray(data.data) &&
-          data.data.length > 0
-        ) {
-          const match =
-            data.data.find(
-              (item) => item.name.toLowerCase() === gameName.toLowerCase(),
-            ) || data.data[0];
+      if (Array.isArray(data) && data.length > 0) {
+        // Procura primeiro por uma correspondência exata do nome que possua um steamAppID válido
+        const matchWithSteam =
+          data.find(
+            (item) =>
+              item.steamAppID &&
+              item.external.toLowerCase() === gameName.toLowerCase(),
+          ) || data.find((item) => item.steamAppID);
 
-          if (match && match.types && match.types.includes("steam")) {
-            console.log(
-              `--> [Steam Fallback] AppID encontrado via SteamGridDB ("${gameName}"):`,
-              match.id,
-            );
-            return String(match.id);
-          }
+        if (matchWithSteam && matchWithSteam.steamAppID) {
+          console.log(
+            `--> [Steam Fallback - CheapShark] AppID encontrado para "${gameName}":`,
+            matchWithSteam.steamAppID,
+            `(${matchWithSteam.external})`,
+          );
+          return String(matchWithSteam.steamAppID);
         }
       }
     }
   } catch (err) {
-    console.warn("[Steam Fallback] Tentativa 1 (SteamGridDB) falhou:", err);
+    console.warn("[Steam Fallback] Tentativa 1 (CheapShark) falhou:", err);
   }
 
-  // 2. Segunda tentativa: Proxy AllOrigins para buscar na Comunidade Steam sem cair no index.html
+  // 2. SEGUNDA TENTATIVA: API do RAWG (Fallback secundário aberto)
   try {
-    const steamCommunityUrl = `https://steamcommunity.com/actions/SearchApps/${cleanName}`;
-    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(steamCommunityUrl)}`;
-
-    const response = await fetch(proxyUrl);
+    const rawgUrl = `https://api.rawg.io/api/games?search=${cleanName}&page_size=5`;
+    const response = await fetch(rawgUrl);
 
     if (response.ok) {
-      const wrapperData = await response.json();
-
-      if (wrapperData && wrapperData.contents) {
-        const parsedContents = JSON.parse(wrapperData.contents);
-
-        if (Array.isArray(parsedContents) && parsedContents.length > 0) {
-          const exactMatch = parsedContents.find(
-            (item) => item.name.toLowerCase() === gameName.toLowerCase(),
-          );
-
-          const selectedItem = exactMatch || parsedContents[0];
-
-          if (selectedItem && selectedItem.appid) {
-            console.log(
-              `--> [Steam Fallback] AppID encontrado via AllOrigins/SteamCommunity ("${gameName}"):`,
-              selectedItem.appid,
-              `(${selectedItem.name})`,
+      const data = await response.json();
+      if (data && data.results && data.results.length > 0) {
+        // Tenta localizar a loja da Steam dentro das lojas do jogo retornado
+        for (const game of data.results) {
+          if (game.stores) {
+            const steamStore = game.stores.find(
+              (s) => s.store && (s.store.slug === "steam" || s.store.id === 1),
             );
-            return String(selectedItem.appid);
+
+            // Opcionalmente extrai o appid da URL da store se disponível
+            if (steamStore && steamStore.url_en) {
+              const match = steamStore.url_en.match(/\/app\/(\d+)/);
+              if (match && match[1]) {
+                console.log(
+                  `--> [Steam Fallback - RAWG] AppID encontrado para "${gameName}":`,
+                  match[1],
+                );
+                return String(match[1]);
+              }
+            }
           }
         }
       }
     }
   } catch (err) {
-    console.warn("[Steam Fallback] Tentativa 2 (AllOrigins) falhou:", err);
+    console.warn("[Steam Fallback] Tentativa 2 (RAWG) falhou:", err);
   }
 
   return null;
@@ -344,6 +339,7 @@ export const getGameAchievements = async (appId, steamId, apiKey) => {
         params: {
           appid: appId,
           key: finalApiKey,
+          l: "portuguese", // 1. Garante nomes e descrições em português
         },
       }),
     ];
@@ -355,6 +351,7 @@ export const getGameAchievements = async (appId, steamId, apiKey) => {
             appid: appId,
             steamid: steamId,
             key: finalApiKey,
+            l: "portuguese",
           },
         }),
       );
@@ -373,13 +370,18 @@ export const getGameAchievements = async (appId, steamId, apiKey) => {
       return [];
     }
 
+    const rawData = schemaResult.value?.data;
     console.log(
       "--> [getGameAchievements] Resposta bruta da API da Steam:",
-      schemaResult.value?.data,
+      rawData,
     );
 
-    const achievements =
-      schemaResult.value?.data?.game?.availableGameStats?.achievements ?? [];
+    // 2. Leitura defensiva: A Steam v2 costuma usar 'gameparams', mas mantemos fallback para 'game'
+    const availableStats =
+      rawData?.gameparams?.availableGameStats ||
+      rawData?.game?.availableGameStats;
+
+    const achievements = availableStats?.achievements ?? [];
 
     console.log(
       `--> [getGameAchievements] Total de conquistas encontradas no Schema: ${achievements.length}`,
