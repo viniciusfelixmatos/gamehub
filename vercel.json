@@ -5,12 +5,16 @@
       "destination": "https://api.steampowered.com/:path*"
     },
     {
+      "source": "/igdb/:path*",
+      "destination": "https://api.igdb.com/v4/:path*"
+    },
+    {
       "source": "/steam-store/:path*",
       "destination": "https://store.steampowered.com/:path*"
     },
     {
-      "source": "/igdb/:path*",
-      "destination": "https://api.igdb.com/v4/:path*"
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }
