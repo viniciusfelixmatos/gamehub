@@ -27,9 +27,9 @@ export function GameCard({ game }) {
 
           {/* Plataformas */}
           <div className="flex flex-wrap gap-2">
-            {game.parent_platforms?.map(({ platform }) => (
+            {game.platforms?.map((platform, index) => (
               <span
-                key={platform.id}
+                key={index}
                 className="text-[10px] font-primary uppercase font-semibold tracking-wider text-zinc-400 bg-bg-element px-2 py-0.5 rounded"
               >
                 {platform.name}

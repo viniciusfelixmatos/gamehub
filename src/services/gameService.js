@@ -64,8 +64,9 @@ export const getPopularGames = async (
       sortClause = "sort name asc;";
     }
 
+    // ADICIONADO: platforms.name e platforms.abbreviation na busca
     const body = `
-      fields name, cover.image_id, genres.name, first_release_date, total_rating;
+      fields name, cover.image_id, genres.name, first_release_date, total_rating, platforms.name, platforms.abbreviation;
       where cover != null${genreFilter};
       ${sortClause}
       limit ${limit};
@@ -79,6 +80,12 @@ export const getPopularGames = async (
       name: game.name,
       background_image: getCoverUrl(game.cover?.image_id),
       genres: game.genres ? game.genres.map((g) => ({ name: g.name })) : [],
+      // ADICIONADO: Mapeamento do array de plataformas
+      platforms: game.platforms
+        ? game.platforms.map((p) => ({
+            name: p.abbreviation || p.name,
+          }))
+        : [],
       released: game.first_release_date
         ? new Date(game.first_release_date * 1000).toLocaleDateString("pt-BR")
         : "N/A",
@@ -262,7 +269,7 @@ export const searchGames = async (
     }
 
     const body = `
-      fields name, cover.image_id, genres.name, first_release_date, total_rating;
+      fields name, cover.image_id, genres.name, first_release_date, total_rating, platforms.name, platforms.abbreviation;
       search "${query}";
       where cover != null${genreFilter};
       ${sortClause}
@@ -277,6 +284,12 @@ export const searchGames = async (
       name: game.name,
       background_image: getCoverUrl(game.cover?.image_id),
       genres: game.genres ? game.genres.map((g) => ({ name: g.name })) : [],
+      // ADICIONADO: Mapeamento das plataformas
+      platforms: game.platforms
+        ? game.platforms.map((p) => ({
+            name: p.abbreviation || p.name,
+          }))
+        : [],
       released: game.first_release_date
         ? new Date(game.first_release_date * 1000).toLocaleDateString("pt-BR")
         : "N/A",
