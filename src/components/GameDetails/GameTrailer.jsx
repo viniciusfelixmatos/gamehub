@@ -1,12 +1,12 @@
 // src/components/GameDetails/GameTrailer.jsx
 import { useYoutubeTrailer } from "../../hooks/useYoutubeTrailer";
 
-export function GameTrailer({ gameName }) {
-  // Passamos o nome do jogo para o hook buscar no YouTube
-  const { videoId, loading, error } = useYoutubeTrailer(gameName);
+export function GameTrailer({ gameName, gameId }) {
+  // Passamos o nome e o ID do jogo para o hook buscar a melhor opção de trailer
+  const { videoId, loading, error } = useYoutubeTrailer(gameName, gameId);
 
-  // Enquanto o nome do jogo não chegou ou a busca está em andamento
-  if (loading || !gameName) {
+  // Enquanto as informações do jogo não chegaram ou a busca está em andamento
+  if (loading || (!gameName && !gameId)) {
     return (
       <div className="bg-bg-surface border border-border-subtle rounded-xl p-6 space-y-4 animate-pulse">
         <div className="h-6 w-32 bg-zinc-700 rounded" />
@@ -15,9 +15,8 @@ export function GameTrailer({ gameName }) {
     );
   }
 
-  // Se a chave não estiver configurada ou a API retornar erro/vazio
+  // Se houver erro ou nenhum vídeo for encontrado, oculta o componente silenciosamente
   if (error || !videoId) {
-    console.warn(`[GameTrailer] Nenhum vídeo encontrado para: "${gameName}"`);
     return null;
   }
 

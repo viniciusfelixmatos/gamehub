@@ -1,7 +1,5 @@
 // src/services/gameService.js
-
 import api from "./api";
-import steamApi from "./steamApi";
 
 // Helpers para gerar URLs de imagens em alta definição da IGDB
 const getCoverUrl = (imageId) =>
@@ -99,86 +97,11 @@ export const getPopularGames = async (
   }
 };
 
-// Função para buscar o AppID da Steam pelo nome do jogo via serviços públicos abertos
-export const searchSteamAppIdByName = async (gameName) => {
-  if (!gameName) return null;
-  const cleanName = encodeURIComponent(gameName.trim());
-
-  // 1. PRIMEIRA TENTATIVA: API da CheapShark (100% pública, com CORS nativo e sem bloqueio em Datacenters/Vercel)
-  try {
-    const cheapSharkUrl = `https://www.cheapshark.com/api/1.0/games?title=${cleanName}&limit=5`;
-    const response = await fetch(cheapSharkUrl);
-
-    if (response.ok) {
-      const data = await response.json();
-
-      if (Array.isArray(data) && data.length > 0) {
-        // Procura primeiro por uma correspondência exata do nome que possua um steamAppID válido
-        const matchWithSteam =
-          data.find(
-            (item) =>
-              item.steamAppID &&
-              item.external.toLowerCase() === gameName.toLowerCase(),
-          ) || data.find((item) => item.steamAppID);
-
-        if (matchWithSteam && matchWithSteam.steamAppID) {
-          console.log(
-            `--> [Steam Fallback - CheapShark] AppID encontrado para "${gameName}":`,
-            matchWithSteam.steamAppID,
-            `(${matchWithSteam.external})`,
-          );
-          return String(matchWithSteam.steamAppID);
-        }
-      }
-    }
-  } catch (err) {
-    console.warn("[Steam Fallback] Tentativa 1 (CheapShark) falhou:", err);
-  }
-
-  // 2. SEGUNDA TENTATIVA: API do RAWG (Fallback secundário aberto)
-  try {
-    const rawgUrl = `https://api.rawg.io/api/games?search=${cleanName}&page_size=5`;
-    const response = await fetch(rawgUrl);
-
-    if (response.ok) {
-      const data = await response.json();
-      if (data && data.results && data.results.length > 0) {
-        // Tenta localizar a loja da Steam dentro das lojas do jogo retornado
-        for (const game of data.results) {
-          if (game.stores) {
-            const steamStore = game.stores.find(
-              (s) => s.store && (s.store.slug === "steam" || s.store.id === 1),
-            );
-
-            // Opcionalmente extrai o appid da URL da store se disponível
-            if (steamStore && steamStore.url_en) {
-              const match = steamStore.url_en.match(/\/app\/(\d+)/);
-              if (match && match[1]) {
-                console.log(
-                  `--> [Steam Fallback - RAWG] AppID encontrado para "${gameName}":`,
-                  match[1],
-                );
-                return String(match[1]);
-              }
-            }
-          }
-        }
-      }
-    }
-  } catch (err) {
-    console.warn("[Steam Fallback] Tentativa 2 (RAWG) falhou:", err);
-  }
-
-  return null;
-};
-
 // Busca detalhes de um jogo específico baseado no identificador único
 export const getGameById = async (id) => {
   try {
-    console.log("--> [getGameById] Buscando detalhes para o ID:", id);
-
     const body = `
-      fields name, summary, storyline, cover.image_id, genres.name, first_release_date, total_rating, screenshots.image_id, external_games.category, external_games.uid;
+      fields name, summary, storyline, cover.image_id, genres.name, first_release_date, total_rating, screenshots.image_id;
       where id = ${id};
     `;
 
@@ -192,29 +115,8 @@ export const getGameById = async (id) => {
     const description =
       game.summary || game.storyline || "Sem descrição disponível.";
 
-    // 1. Primeira tentativa: Tenta pegar o AppID via IGDB
-    let steamExternal = game.external_games?.find(
-      (ext) => Number(ext.category) === 1 || Number(ext.category) === 13,
-    );
-
-    let steamAppId = steamExternal?.uid ? String(steamExternal.uid) : null;
-
-    // 2. Segunda tentativa (FALLBACK AUTOMÁTICO): Busca na Steam pelo nome do jogo
-    if (!steamAppId && game.name) {
-      console.log(
-        `--> [getGameById] AppID ausente na IGDB. Tentando buscar pelo nome: "${game.name}"...`,
-      );
-      steamAppId = await searchSteamAppIdByName(game.name);
-    }
-
-    console.log(
-      "--> [getGameById] AppID da Steam final resolvido:",
-      steamAppId,
-    );
-
     return {
       id: game.id,
-      steamAppId,
       name: game.name,
       description: description,
       description_raw: description,
@@ -293,137 +195,48 @@ export const getGameTrailers = async () => {
 };
 
 // Extrai o identificador de vídeo do trailer oficial no YouTube
-export const getYoutubeTrailer = async (gameName) => {
+// src/services/gameService.js
+
+export const getYoutubeTrailer = async (gameName, gameId = null) => {
+  // 1. PRIMEIRA TENTATIVA: Buscar trailer oficial direto na IGDB (se gameId for passado)
+  if (gameId) {
+    try {
+      const body = `
+        fields videos.video_id;
+        where id = ${gameId};
+      `;
+
+      const response = await api.post("/games", body);
+      const videoId = response.data[0]?.videos?.[0]?.video_id;
+
+      if (videoId) {
+        return videoId;
+      }
+    } catch (err) {
+      // Falha silenciosa no fallback da IGDB
+    }
+  }
+
+  // 2. SEGUNDA TENTATIVA: Fallback via YouTube Search API
   const YOUTUBE_KEY = import.meta.env.VITE_YOUTUBE_API_KEY;
-
-  if (!YOUTUBE_KEY) return null;
-
-  const searchQuery = encodeURIComponent(`${gameName} official trailer`);
-
-  const response = await fetch(
-    `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${searchQuery}&type=video&maxResults=1&key=${YOUTUBE_KEY}`,
-  );
-
-  if (!response.ok) {
-    throw new Error("Erro ao buscar trailer no YouTube");
-  }
-
-  const data = await response.json();
-
-  return data.items?.[0]?.id?.videoId || null;
-};
-
-/**
- * Busca conquistas de um jogo usando a Steam Web API.
- */
-export const getGameAchievements = async (appId, steamId, apiKey) => {
-  // Usa a chave do .env se nenhuma apiKey for fornecida explicitamente
-  const finalApiKey = apiKey || import.meta.env.VITE_STEAM_API_KEY;
-
-  console.log("--> [getGameAchievements] Parâmetros recebidos:", {
-    appId,
-    steamId: steamId || "não informado",
-    temApiKey: !!finalApiKey,
-  });
-
-  if (!appId || !finalApiKey) {
-    console.warn(
-      "[gameService] appId e apiKey são obrigatórios para buscar conquistas.",
-    );
-    return [];
-  }
+  if (!YOUTUBE_KEY || !gameName) return null;
 
   try {
-    const promises = [
-      steamApi.get("/ISteamUserStats/GetSchemaForGame/v2/", {
-        params: {
-          appid: appId,
-          key: finalApiKey,
-          l: "portuguese", // 1. Garante nomes e descrições em português
-        },
-      }),
-    ];
-
-    if (steamId) {
-      promises.push(
-        steamApi.get("/ISteamUserStats/GetPlayerAchievements/v1/", {
-          params: {
-            appid: appId,
-            steamid: steamId,
-            key: finalApiKey,
-            l: "portuguese",
-          },
-        }),
-      );
-    }
-
-    const results = await Promise.allSettled(promises);
-
-    const schemaResult = results[0];
-    const playerResult = steamId ? results[1] : null;
-
-    if (schemaResult.status === "rejected") {
-      console.warn(
-        "[gameService] Falha ao obter schema do jogo na Steam:",
-        schemaResult.reason,
-      );
-      return [];
-    }
-
-    const rawData = schemaResult.value?.data;
-    console.log(
-      "--> [getGameAchievements] Resposta bruta da API da Steam:",
-      rawData,
+    // Adiciona "game official gameplay trailer" para evitar confundir com filmes
+    const searchQuery = encodeURIComponent(
+      `${gameName} game official gameplay trailer`,
     );
 
-    // 2. Leitura defensiva: A Steam v2 costuma usar 'gameparams', mas mantemos fallback para 'game'
-    const availableStats =
-      rawData?.gameparams?.availableGameStats ||
-      rawData?.game?.availableGameStats;
-
-    const achievements = availableStats?.achievements ?? [];
-
-    console.log(
-      `--> [getGameAchievements] Total de conquistas encontradas no Schema: ${achievements.length}`,
+    const response = await fetch(
+      `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${searchQuery}&type=video&maxResults=1&key=${YOUTUBE_KEY}`,
     );
 
-    const playerAchievements =
-      playerResult && playerResult.status === "fulfilled"
-        ? (playerResult.value?.data?.playerstats?.achievements ?? [])
-        : [];
+    if (!response.ok) return null;
 
-    const playerMap = new Map(
-      playerAchievements.map((achievement) => [
-        achievement.apiname,
-        achievement,
-      ]),
-    );
-
-    const formattedAchievements = achievements.map((achievement) => {
-      const playerAchievement = playerMap.get(achievement.name);
-      const unlocked = playerAchievement?.achieved === 1;
-
-      return {
-        id: achievement.name,
-        name: achievement.displayName || "Conquista sem nome",
-        description: achievement.description || "Sem descrição disponível.",
-        image: achievement.icon || null,
-        imageGray: achievement.icongray || null,
-        hidden: achievement.hidden === 1,
-        unlocked,
-        unlockTime: unlocked ? playerAchievement.unlocktime : null,
-      };
-    });
-
-    console.log(
-      "--> [getGameAchievements] Lista final formatada:",
-      formattedAchievements,
-    );
-
-    return formattedAchievements;
+    const data = await response.json();
+    return data.items?.[0]?.id?.videoId || null;
   } catch (error) {
-    console.error("[gameService] Erro ao buscar conquistas na Steam:", error);
-    return [];
+    return null;
   }
 };
 

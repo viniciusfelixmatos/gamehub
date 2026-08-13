@@ -11,7 +11,6 @@ import { GameTrailer } from "../components/GameDetails/GameTrailer";
 import { GameScreenshots } from "../components/GameDetails/GameScreenshots";
 import { GameRelated } from "../components/GameDetails/GameRelated";
 import { GameSidebar } from "../components/GameDetails/GameSidebar";
-import { GameAchievements } from "../components/GameDetails/GameAchievements";
 
 // Importando o esqueleto de carregamento
 import { GameDetailsSkeleton } from "../components/GameDetails/GameDetailsSkeleton";
@@ -33,12 +32,6 @@ export function GameDetails() {
       document.title = "GameHub";
     };
   }, [id, game?.name]);
-
-  // Logs para inspecionar no console do navegador (F12)
-  if (game) {
-    console.log("--> [GameDetails] Objeto game carregado:", game);
-    console.log("--> [GameDetails] steamAppId encontrado:", game.steamAppId);
-  }
 
   // Tela de carregamento
   if (loading) {
@@ -76,12 +69,6 @@ export function GameDetails() {
 
           {/* Player de vídeo */}
           <GameTrailer gameName={game.name} />
-
-          {/* Renderiza o componente repassando o AppID encontrado ou o fallback "730" (CS2) caso esteja nulo */}
-          {/* Só renderiza se realmente houver um steamAppId retornado */}
-          {game.steamAppId && (
-            <GameAchievements gameName={game.name} appId={game.steamAppId} />
-          )}
 
           <GameScreenshots screenshots={screenshots} />
 

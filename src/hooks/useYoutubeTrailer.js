@@ -2,14 +2,14 @@
 import { useState, useEffect } from "react";
 import { getYoutubeTrailer } from "../services/gameService";
 
-export function useYoutubeTrailer(gameName) {
+export function useYoutubeTrailer(gameName, gameId = null) {
   const [videoId, setVideoId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Se o nome do jogo ainda não chegou, reseta os estados e não faz a busca
-    if (!gameName) {
+    // Se nem o nome nem o ID do jogo chegaram, reseta os estados
+    if (!gameName && !gameId) {
       setVideoId(null);
       setLoading(false);
       return;
@@ -19,14 +19,13 @@ export function useYoutubeTrailer(gameName) {
     setLoading(true);
     setError(null);
 
-    getYoutubeTrailer(gameName)
+    getYoutubeTrailer(gameName, gameId)
       .then((id) => {
         if (isMounted) {
           setVideoId(id);
         }
       })
       .catch((err) => {
-        console.error("Erro ao buscar trailer do YouTube:", err);
         if (isMounted) {
           setError(err);
         }
@@ -40,7 +39,7 @@ export function useYoutubeTrailer(gameName) {
     return () => {
       isMounted = false;
     };
-  }, [gameName]);
+  }, [gameName, gameId]);
 
   return { videoId, loading, error };
 }
